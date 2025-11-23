@@ -30,69 +30,103 @@ def run_bot(player_id, redeem_code):
     wait = WebDriverWait(driver, 20)
 
     try:
-        # 2. Open Target URL
+        # --- LOGIN PHASE ---
         print("Opening Midasbuy...")
         driver.get(TARGET_URL)
         
-        # 3. Click 'Login' Button (.Button_btn_primary__1ncdM)
         print("Clicking Main Login Button...")
         login_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".Button_btn_primary__1ncdM")))
         login_btn.click()
         
-        # 4. Click 'Sign in with other methods' (.to-other-login)
         print("Selecting 'Other Methods'...")
         other_methods_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".to-other-login")))
         other_methods_btn.click()
         
-        # 5. Input Email
         print(f"Entering Email: {BOT_EMAIL}")
         email_input = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='email']")))
         email_input.clear()
         email_input.send_keys(BOT_EMAIL)
         
-        # 6. Click Continue (.btn.comfirm-btn)
         print("Clicking Continue...")
         continue_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".btn.comfirm-btn")))
         continue_btn.click()
         
-        # Wait for password field animation
         time.sleep(2)
         
-        # 7. Input Password
         print("Entering Password...")
         pass_input = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='password']")))
         pass_input.send_keys(BOT_PASSWORD)
         
-        # 8. Click Login (.btn.comfirm-btn)
-        # Note: The class name is the same, so we find the visible one or re-query
         print("Submitting Login...")
         login_submit_btns = driver.find_elements(By.CSS_SELECTOR, ".btn.comfirm-btn")
-        # Usually the second one is the active one now, or we click the visible one
         for btn in login_submit_btns:
             if btn.is_displayed():
                 btn.click()
                 break
                 
-        # 9. Verify Login Success
         print("Waiting for Login to complete...")
-        time.sleep(5) # Wait for redirect
+        time.sleep(5) 
+
+        # --- REDEMPTION PHASE ---
         
-        # 10. Process Redemption
-        print(f"Processing Redemption for ID: {player_id}")
-        # Logic to enter ID and Code would go here...
+        # 1. Click Switch Icon
+        print("Clicking Switch Icon...")
+        switch_icon = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "i[class*='i-midas:switch']")))
+        switch_icon.click()
+        time.sleep(1)
+
+        # 2. Check for Error Icon (Clear button) inside Input Wrapper
+        print("Checking for Clear Button...")
+        try:
+            # Look inside .SelectServerBox_input_wrap_box__qq+Iq (Escaped for CSS: \\+ )
+            clear_btn = driver.find_element(By.CSS_SELECTOR, ".SelectServerBox_input_wrap_box__qq\\+Iq i[class*='i-midas:error-filled']")
+            if clear_btn.is_displayed():
+                clear_btn.click()
+                print("Cleared existing input.")
+                time.sleep(0.5)
+        except:
+            print("No clear button found, proceeding.")
+
+        # 3. Enter Player ID
+        print(f"Entering Player ID: {player_id}")
+        # Targeting input inside the wrapper
+        id_input = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".SelectServerBox_input_wrap_box__qq\\+Iq input")))
+        id_input.clear()
+        id_input.send_keys(player_id)
+        time.sleep(1)
+
+        # 4. Click OK (First one)
+        print("Clicking OK (Player Verification)...")
+        # Usually the first primary button on page or specific one
+        ok_btn_1 = driver.find_element(By.CSS_SELECTOR, ".Button_btn__P0ibl.Button_btn_primary__1ncdM")
+        ok_btn_1.click()
+        time.sleep(2)
+
+        # 5. Enter Redeem Code
+        print(f"Entering Code: {redeem_code}")
+        code_input = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input[placeholder='يرجى إدخال رمز استرداد']")))
+        code_input.clear()
+        code_input.send_keys(redeem_code)
+        time.sleep(1)
+
+        # 6. Click Final OK
+        print("Clicking Final OK...")
+        final_ok_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".Button_btn_wrap__utZqk .Button_btn__P0ibl.Button_btn_primary__1ncdM")))
+        final_ok_btn.click()
         
-        print("SUCCESS: Bot Login Sequence Complete.")
+        # 7. Check Result
+        print("Waiting for Result...")
+        time.sleep(3)
+        print("SUCCESS: Redemption Flow Complete.")
         
     except Exception as e:
         print(f"ERROR: {str(e)}")
         
     finally:
-        # driver.quit() # Keep open to see result
+        # driver.quit() 
         pass
 
-# Example Usage (In a real scenario, this script would listen to an API or Database)
 if __name__ == "__main__":
-    # These would come from the React App request
     run_bot("PLAYER_ID_HERE", "REDEEM_CODE_HERE")
 `;
 };
@@ -109,60 +143,94 @@ export const generateJavaScriptConsoleCode = (accounts: BotAccount[]) => {
 
     console.log("%c[MidasBot] Starting Sequence...", "color: #8b5cf6; font-size: 14px; font-weight: bold;");
 
-    // 1. Click Login Button
+    // --- LOGIN ---
     const loginBtn = document.querySelector('.Button_btn_primary__1ncdM');
-    if(loginBtn) {
-        loginBtn.click();
-        console.log("✔ Clicked Login Button");
-        await sleep(1500);
-    } else { console.error("Login button not found"); return; }
+    if(loginBtn) { loginBtn.click(); await sleep(1500); }
 
-    // 2. Click 'Other Login'
     const otherBtn = document.querySelector('.to-other-login');
-    if(otherBtn) {
-        otherBtn.click();
-        console.log("✔ Clicked Other Methods");
-        await sleep(1500);
-    } else { console.error("Other login button not found"); return; }
+    if(otherBtn) { otherBtn.click(); await sleep(1500); }
 
-    // 3. Enter Email
     const emailInput = document.querySelector('input[type="email"]');
     if(emailInput) {
-        // React/Vue often require dispatching events
-        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        nativeInputValueSetter.call(emailInput, email);
+        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeSetter.call(emailInput, email);
         emailInput.dispatchEvent(new Event('input', { bubbles: true }));
-        console.log("✔ Entered Email");
         await sleep(1000);
     }
 
-    // 4. Click Continue
     const confirmBtns = document.querySelectorAll('.btn.comfirm-btn');
-    if(confirmBtns.length > 0) {
-        confirmBtns[0].click();
-        console.log("✔ Clicked Continue");
-        await sleep(2500);
-    }
+    if(confirmBtns.length > 0) { confirmBtns[0].click(); await sleep(2500); }
 
-    // 5. Enter Password
     const passInput = document.querySelector('input[type="password"]');
     if(passInput) {
-        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        nativeInputValueSetter.call(passInput, password);
+        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeSetter.call(passInput, password);
         passInput.dispatchEvent(new Event('input', { bubbles: true }));
-        console.log("✔ Entered Password");
         await sleep(1000);
     }
 
-    // 6. Click Login
     const loginBtns = document.querySelectorAll('.btn.comfirm-btn');
-    // Find the visible one
     for(let btn of loginBtns) {
-        if(btn.offsetParent !== null) {
-            btn.click();
-            console.log("✔ Clicked Final Login");
-            break;
-        }
+        if(btn.offsetParent !== null) { btn.click(); break; }
+    }
+    await sleep(5000);
+
+    // --- REDEEM ---
+    console.log("✔ Login Phase Done. Starting Redeem Phase...");
+
+    // 1. Click Switch
+    const switchIcon = document.querySelector('.i-midas\\:switch.icon') || document.querySelector('i[class*="i-midas:switch"]');
+    if(switchIcon) { 
+        switchIcon.click(); 
+        console.log("✔ Clicked Switch");
+        await sleep(1000);
+    }
+
+    // 2. Clear Input
+    const clearBtn = document.querySelector('.SelectServerBox_input_wrap_box__qq\\+Iq .i-midas\\:error-filled') || 
+                     document.querySelector('div[class*="SelectServerBox_input_wrap_box"] i[class*="i-midas:error-filled"]');
+    if(clearBtn) {
+        clearBtn.click();
+        console.log("✔ Cleared Input");
+        await sleep(500);
+    }
+
+    // 3. Enter ID
+    // Note: We use a generic placeholder to find Player ID to be safe if class is dynamic, but fallback to requested class
+    const idInput = document.querySelector('div[class*="SelectServerBox_input_wrap_box"] input') || 
+                    document.querySelector('.SelectServerBox_input_wrap_box__qq\\+Iq input');
+    
+    if(idInput) {
+        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeSetter.call(idInput, "PLAYER_ID_HERE"); // Replace manually
+        idInput.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("✔ Entered ID");
+        await sleep(1000);
+    }
+
+    // 4. Click OK
+    const okBtn = document.querySelector('.Button_btn__P0ibl.Button_btn_primary__1ncdM');
+    if(okBtn) {
+        okBtn.click();
+        console.log("✔ Clicked OK");
+        await sleep(2000);
+    }
+
+    // 5. Enter Code
+    const codeInput = document.querySelector('input[placeholder="يرجى إدخال رمز استرداد"]');
+    if(codeInput) {
+        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeSetter.call(codeInput, "CODE_HERE"); // Replace manually
+        codeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log("✔ Entered Code");
+        await sleep(1000);
+    }
+
+    // 6. Final OK
+    const finalOk = document.querySelector('.Button_btn_wrap__utZqk .Button_btn__P0ibl.Button_btn_primary__1ncdM');
+    if(finalOk) {
+        finalOk.click();
+        console.log("✔ Clicked Final OK");
     }
 })();
     `;

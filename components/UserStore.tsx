@@ -5,6 +5,13 @@ import { BotTerminal } from './BotTerminal';
 import { validatePlayerId } from '../services/geminiService';
 import { Link } from 'react-router-dom';
 
+interface ResultModalState {
+  show: boolean;
+  type: 'success' | 'error';
+  title: string;
+  message: string;
+}
+
 export const UserStore: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [user, setUser] = useState<UserProfile>(storageService.getUser());
@@ -16,6 +23,14 @@ export const UserStore: React.FC = () => {
   const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
   const [activeTransaction, setActiveTransaction] = useState<Transaction | null>(null);
   const [showMonitor, setShowMonitor] = useState(false);
+
+  // Result Modal State
+  const [resultModal, setResultModal] = useState<ResultModalState>({
+    show: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     setProducts(storageService.getProducts());
@@ -40,15 +55,21 @@ export const UserStore: React.FC = () => {
   useEffect(() => {
     if (activeTransaction) {
         if (activeTransaction.status === 'success') {
-            setTimeout(() => {
-                alert("Transaction Completed Successfully!\n" + activeTransaction.aiAnalysis);
-                resetSelection();
-            }, 1000);
+            setResultModal({
+                show: true,
+                type: 'success',
+                title: 'Operation Successful',
+                message: activeTransaction.aiAnalysis || 'The recharging process was completed successfully.'
+            });
+            resetSelection();
         } else if (activeTransaction.status === 'failed') {
-            setTimeout(() => {
-                alert("Transaction Failed.\n" + activeTransaction.aiAnalysis);
-                resetSelection();
-            }, 1000);
+            setResultModal({
+                show: true,
+                type: 'error',
+                title: 'Operation Failed',
+                message: activeTransaction.aiAnalysis || 'The transaction could not be completed.'
+            });
+            resetSelection();
         }
     }
   }, [activeTransaction?.status]);
@@ -61,16 +82,30 @@ export const UserStore: React.FC = () => {
     setPlayerId('');
   }
 
+  const closeResultModal = () => {
+      setResultModal({ ...resultModal, show: false });
+  };
+
   const handleBuy = async () => {
     if (!selectedProduct) return;
     if (!playerId) {
-      alert("Please enter a Player ID");
+      setResultModal({
+          show: true,
+          type: 'error',
+          title: 'Input Error',
+          message: 'Please enter a valid Player ID.'
+      });
       return;
     }
 
     // CHECK STOCK
     if (!selectedProduct.redeemCodes || selectedProduct.redeemCodes.length === 0) {
-        alert("This product is currently out of stock!");
+        setResultModal({
+            show: true,
+            type: 'error',
+            title: 'Out of Stock',
+            message: 'This product is currently unavailable.'
+        });
         return;
     }
 
@@ -79,14 +114,24 @@ export const UserStore: React.FC = () => {
     // --- STEP 1: VERIFY ID (Gemini Flash) ---
     const idCheck = await validatePlayerId(playerId);
     if (!idCheck.isValid) {
-        alert(`ID Error: ${idCheck.message}`);
+        setResultModal({
+            show: true,
+            type: 'error',
+            title: 'Invalid Player ID',
+            message: idCheck.message || 'The format of the Player ID is incorrect.'
+        });
         setIsSubmitting(false);
         return;
     }
 
     // --- STEP 2: CHECK BALANCE ---
     if (user.balance < selectedProduct.price) {
-        alert(`Insufficient Funds. Required: $${selectedProduct.price}, Available: $${user.balance.toFixed(2)}`);
+        setResultModal({
+            show: true,
+            type: 'error',
+            title: 'Insufficient Funds',
+            message: `Required: $${selectedProduct.price.toFixed(2)}\nAvailable: $${user.balance.toFixed(2)}`
+        });
         setIsSubmitting(false);
         return;
     }
@@ -115,12 +160,49 @@ export const UserStore: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto relative">
       {/* Bot Terminal / Monitor Overlay */}
       <BotTerminal 
         isOpen={showMonitor} 
         logs={activeTransaction?.log || []} 
       />
+
+      {/* Result Notification Modal */}
+      {resultModal.show && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-gray-900 rounded-2xl border border-gray-700 shadow-2xl max-w-md w-full overflow-hidden transform transition-all scale-100">
+                {/* Modal Header */}
+                <div className={`p-6 flex flex-col items-center justify-center text-center ${resultModal.type === 'success' ? 'bg-green-900/20' : 'bg-red-900/20'}`}>
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 ${resultModal.type === 'success' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                        <i className={`fas ${resultModal.type === 'success' ? 'fa-check' : 'fa-times'} text-4xl`}></i>
+                    </div>
+                    <h3 className={`text-2xl font-bold ${resultModal.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                        {resultModal.title}
+                    </h3>
+                </div>
+                
+                {/* Modal Body */}
+                <div className="p-6">
+                    <p className="text-gray-300 text-center text-lg whitespace-pre-line leading-relaxed">
+                        {resultModal.message}
+                    </p>
+                    
+                    <div className="mt-8">
+                        <button 
+                            onClick={closeResultModal}
+                            className={`w-full py-3 px-4 rounded-xl font-bold text-white transition-all transform active:scale-95 ${
+                                resultModal.type === 'success' 
+                                ? 'bg-green-600 hover:bg-green-500 shadow-lg shadow-green-900/50' 
+                                : 'bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/50'
+                            }`}
+                        >
+                            {resultModal.type === 'success' ? 'Done' : 'Close'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
       
       {/* Header Info */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-lg">

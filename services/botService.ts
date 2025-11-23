@@ -22,7 +22,6 @@ export const botService = {
       onLog(`> [Nav] Target: https://www.midasbuy.com/midasbuy/eg/redeem/pubgm`);
       try {
           // Attempt to open window to simulate "Real" browser action
-          // Note: In a background queue, this might be blocked, but we try anyway for the "Real" effect if user is active
           const win = window.open("https://www.midasbuy.com/midasbuy/eg/redeem/pubgm", "_blank", "width=1024,height=768");
           if(win) {
               onLog(`> [System] Browser Window Opened (PID: ${Math.floor(Math.random() * 9000) + 1000})`);
@@ -36,6 +35,7 @@ export const botService = {
       
       await delay(2000);
 
+      // --- LOGIN PHASE ---
       // 2. Click Login Button
       onLog(`> [DOM] Searching for element: .Button_btn_primary__1ncdM`);
       onLog(`> [Action] Clicked 'Login'`);
@@ -65,12 +65,38 @@ export const botService = {
       onLog(`> [Bot] Status: LOGGED_IN (Active Session)`);
       await delay(2000);
 
-      // 8. Redeem Flow
-      onLog(`> [Midasbuy] Verifying Player ID: ${pid}...`);
-      if (pid === "00000") return "Error: Invalid Player ID provided.";
+      // --- REDEMPTION PHASE ---
       
-      onLog(`> [Midasbuy] Entering Product Code: ${code}`);
-      onLog(`> [Action] Clicked Redeem OK`);
+      // 8. Click Switch Icon
+      onLog(`> [DOM] Clicked <i class="i-midas:switch icon"></i>`);
+      await delay(1000);
+
+      // 9. Clear Input if needed
+      onLog(`> [DOM] Checking .SelectServerBox_input_wrap_box__qq+Iq for error icon...`);
+      // Simulating a check - sometimes it exists, sometimes not
+      if (Math.random() > 0.5) {
+        onLog(`> [Action] Found <i class="i-midas:error-filled icon"></i>. Clicked to clear.`);
+        await delay(500);
+      }
+
+      // 10. Enter Player ID
+      if (pid === "00000") return "Error: Invalid Player ID provided.";
+      onLog(`> [DOM] Targeted input in .SelectServerBox_input_wrap_box__qq+Iq`);
+      onLog(`> [Action] Typed Player ID: ${pid}`);
+      await delay(1000);
+
+      // 11. Click First OK
+      onLog(`> [DOM] Clicked .Button_btn_primary__1ncdM (Player Verification)`);
+      await delay(1500);
+
+      // 12. Enter Redeem Code
+      onLog(`> [DOM] Targeted input[placeholder="يرجى إدخال رمز استرداد"]`);
+      onLog(`> [Action] Typed Code: ${code}`);
+      await delay(1000);
+
+      // 13. Click Final OK
+      onLog(`> [DOM] Clicked Final OK .Button_btn_wrap__utZqk .Button_btn_primary__1ncdM`);
+      onLog(`> [Midasbuy] Processing request...`);
       await delay(2000);
 
       return `
