@@ -1,0 +1,5 @@
+{
+  "name": "MidasBot Auto-Redeemer",
+  "description": "A comprehensive automated redemption system for game codes. Features an admin panel for product/account management and a user-facing store with AI-powered transaction verification.",
+  "requestFramePermissions": []
+}
