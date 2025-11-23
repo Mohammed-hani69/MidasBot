@@ -95,10 +95,41 @@ export const botService = {
       await delay(1000);
 
       // 13. Click Final OK
-      onLog(`> [DOM] Clicked Final OK .Button_btn_wrap__utZqk .Button_btn_primary__1ncdM`);
+      onLog(`> [DOM] Clicked Final OK .Button_btn_wrap__utZqk .Button_btn__P0ibl.Button_btn_primary__1ncdM`);
       onLog(`> [Midasbuy] Processing request...`);
       await delay(2000);
 
+      // --- SIMULATED RESPONSES FOR TESTING ---
+      // If code contains keywords, we simulate specific Midasbuy HTML responses
+      
+      if (code.includes("INVALID") || code.includes("EXP")) {
+          onLog(`> [Website] Returned Error Dialog`);
+          return `
+            <div class="Dialog_dialog_content__2u04P">
+              <div> خطأ في تنسيق الرمز، يرجى المحاولة مجددًا.</div>
+            </div>
+          `;
+      }
+      
+      if (code.includes("REGION")) {
+          onLog(`> [Website] Returned Error Dialog`);
+          return `
+            <div class="Dialog_dialog_content__2u04P">
+               <div>This redemption code is not applicable for your region.</div>
+            </div>
+          `;
+      }
+
+      if (code.includes("USED")) {
+          onLog(`> [Website] Returned Error Dialog`);
+          return `
+            <div class="Dialog_dialog_content__2u04P">
+               <div>This code has already been redeemed.</div>
+            </div>
+          `;
+      }
+
+      // Success Case
       return `
         Transaction Result:
         -------------------

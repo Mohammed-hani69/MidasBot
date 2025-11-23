@@ -459,7 +459,7 @@ export const AdminPanel: React.FC = () => {
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Bot</th>
                 <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">AI Note</th>
+                <th className="px-6 py-4 w-1/3">AI Analysis (Errors/Notes)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -480,7 +480,9 @@ export const AdminPanel: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-xs font-mono">{t.botId ? accounts.find(a => a.id === t.botId)?.email || t.botId.slice(0,5) : '-'}</td>
                   <td className="px-6 py-4">{new Date(t.timestamp).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 italic text-xs max-w-xs truncate">{t.aiAnalysis || '-'}</td>
+                  <td className={`px-6 py-4 text-xs whitespace-pre-wrap ${t.status === 'failed' ? 'text-red-400 font-bold' : 'text-gray-400 italic'}`}>
+                      {t.aiAnalysis || '-'}
+                  </td>
                 </tr>
               ))}
               {transactions.length === 0 && (

@@ -67,10 +67,20 @@ export const analyzeRedemptionResult = async (
             """
             
             Analyze this text carefully.
-            1. Determine if the redemption succeeded. Look for keywords like "Success", "Redeemed", "Sent", "OK".
-            2. If SUCCESS: Write a friendly confirmation message.
-            3. If FAILED: Extract the SPECIFIC error reason provided by the website text (e.g., "Invalid Game ID", "Verification Code Error", "System Busy", "Limit Reached", "Region not supported"). Do not be generic.
-            4. User Notification: Write the final message for the user in the same language as the website text (or English if mixed).
+            
+            CRITICAL RULES:
+            1. If the text contains "خطأ في تنسيق الرمز، يرجى المحاولة مجددًا", then:
+               - success: false
+               - userNotification: "كود الاسترداد غير صالح او منتهي الصلاحيه"
+            
+            2. If the text contains "Success", "Redeemed", "Sent", or "OK", then:
+               - success: true
+               - userNotification: "Success: Items sent to account."
+
+            3. If FAILED (and not the specific error above): 
+               - YOU MUST EXTRACT THE EXACT ERROR TEXT shown on the website.
+               - Your notification should be: "Error: [The Exact Error Text from Site] - [Brief explanation]"
+               - Translate the error to Arabic if it is in English and vice-versa.
             
             Return JSON.
         `;
@@ -84,7 +94,7 @@ export const analyzeRedemptionResult = async (
                     type: Type.OBJECT,
                     properties: {
                         success: { type: Type.BOOLEAN },
-                        userNotification: { type: Type.STRING, description: "The message shown to the user. If failed, must include specific error details." }
+                        userNotification: { type: Type.STRING, description: "The detailed message for the log/user." }
                     },
                     required: ["success", "userNotification"]
                 }

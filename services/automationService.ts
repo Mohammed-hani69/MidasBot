@@ -117,7 +117,16 @@ def run_bot(player_id, redeem_code):
         # 7. Check Result
         print("Waiting for Result...")
         time.sleep(3)
-        print("SUCCESS: Redemption Flow Complete.")
+        
+        # Check for error popup content
+        try:
+            error_dialog = driver.find_element(By.CSS_SELECTOR, ".Dialog_dialog_content__2u04P")
+            if error_dialog.is_displayed():
+                print(f"ERROR_FROM_SITE: {error_dialog.text}")
+            else:
+                print("SUCCESS: Redemption Flow Complete.")
+        except:
+             print("SUCCESS: Redemption Flow Complete (No error dialog found).")
         
     except Exception as e:
         print(f"ERROR: {str(e)}")
