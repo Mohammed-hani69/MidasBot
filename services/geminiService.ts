@@ -67,8 +67,10 @@ export const analyzeRedemptionResult = async (
             """
             
             Analyze this text carefully.
-            1. Did the redemption succeed? (Look for keywords like "Success", "Redeemed", "Sent", "OK").
-            2. Write a notification message for the user in the same language as the website text (or English if mixed).
+            1. Determine if the redemption succeeded. Look for keywords like "Success", "Redeemed", "Sent", "OK".
+            2. If SUCCESS: Write a friendly confirmation message.
+            3. If FAILED: Extract the SPECIFIC error reason provided by the website text (e.g., "Invalid Game ID", "Verification Code Error", "System Busy", "Limit Reached", "Region not supported"). Do not be generic.
+            4. User Notification: Write the final message for the user in the same language as the website text (or English if mixed).
             
             Return JSON.
         `;
@@ -82,7 +84,7 @@ export const analyzeRedemptionResult = async (
                     type: Type.OBJECT,
                     properties: {
                         success: { type: Type.BOOLEAN },
-                        userNotification: { type: Type.STRING }
+                        userNotification: { type: Type.STRING, description: "The message shown to the user. If failed, must include specific error details." }
                     },
                     required: ["success", "userNotification"]
                 }
